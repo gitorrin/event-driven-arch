@@ -30,6 +30,32 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "POST invalid notes",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "This is invalid JSON !",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{APIEndpoint}}/Prod",
+					"host": [
+						"{{APIEndpoint}}"
+					],
+					"path": [
+						"Prod"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
