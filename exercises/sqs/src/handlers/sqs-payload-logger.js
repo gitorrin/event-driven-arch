@@ -12,10 +12,12 @@ exports.sqsPayloadLoggerHandler = async (event, context) => {
     console.info(JSON.stringify(event));
     for (const message of event.Records){
       try{
-        let result = await recordText(message.messageId, JSON.parse(message.body).text);
-        if (result) {
-          console.log(">>>>>>>>>", JSON.stringify(result));
-        }
+          let validationResponse = validateMessage(message.body);
+          if (validationResponse ===""){
+              await recordText(message.messageId, JSON.parse(message.body).text);
+          } else {
+              await recordError(message.messageId, validationResponse);
+          }
       }catch (error) {
         console.log(error);
         // Return error will consume message from the queue, throw error so that message is not lost
@@ -34,4 +36,25 @@ function recordText(textId, inputText) {
     }
   };
   return docClient.put(params).promise();
+}
+
+function recordError(textId, error) {
+  var params = {
+    TableName: table,
+    Item: {
+      "MessageId": textId,
+      "error": error.message,
+    }
+  };
+  return docClient.put(params).promise();
+}
+
+function validateMessage(body){
+  try{
+    JSON.parse(body).text;
+    return "";
+  } catch (error){
+    console.log("Error parsing body, it will be saved with error", error);
+    return error;
+  }
 }
