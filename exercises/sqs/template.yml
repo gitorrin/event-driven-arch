@@ -20,6 +20,14 @@ Resources:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sqs-queues.html
   SimpleQueue:
     Type: AWS::SQS::Queue
+    Properties:
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt SimpleQueueDLQ.Arn
+        maxReceiveCount: 3
+  
+  # This is the DLQ for the SimpleQueue
+  SimpleQueueDLQ:
+    Type: AWS::SQS::Queue
   
   QueueApiGatewayRole:
     Type: AWS::IAM::Role
