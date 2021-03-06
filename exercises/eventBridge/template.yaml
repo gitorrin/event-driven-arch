@@ -1,0 +1,38 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Master stack: Event-driven Architectures Workshop'
+
+Resources:
+  CognitoUserPool:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://aws-event-driven-architecture-workshop-assets.s3.amazonaws.com/cognito-user-pool.yaml
+      TimeoutInMinutes: 60
+
+  SNS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://aws-event-driven-architecture-workshop-assets.s3.amazonaws.com/sns.yaml
+      TimeoutInMinutes: 60
+
+  EventBridge:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://aws-event-driven-architecture-workshop-assets.s3.amazonaws.com/event-bridge.yaml
+      TimeoutInMinutes: 60
+
+  Lambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://aws-event-driven-architecture-workshop-assets.s3.amazonaws.com/lambda.yaml
+      TimeoutInMinutes: 60
+
+Outputs:
+ StackRef:
+   Value: !Ref CognitoUserPool
+ EventGeneratorConfigurationUrl:
+   Value: !GetAtt CognitoUserPool.Outputs.EventGeneratorConfigurationUrl
+ EventGeneratorUsername:
+   Value: !GetAtt CognitoUserPool.Outputs.EventGeneratorUsername
+ EventGeneratorPassword:
+   Value: !GetAtt CognitoUserPool.Outputs.EventGeneratorPassword
