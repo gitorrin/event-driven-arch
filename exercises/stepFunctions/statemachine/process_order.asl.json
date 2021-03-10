@@ -1,0 +1,98 @@
+{
+    "Comment": "A state machine that does mock order processing.",
+    "StartAt": "Save Order",
+    "States": {
+        "Save Order": {
+            "Type": "Task",
+            "Resource": "${SaveFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 15,
+                    "MaxAttempts": 5,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Next": "Process Payment"
+        },
+        "Process Payment": {
+            "Type": "Task",
+            "Resource": "${ProcessFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 15,
+                    "MaxAttempts": 5,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Next": "Payment Choice"
+        },
+         "Payment Choice": {
+            "Type": "Choice",
+            "Choices": [
+                 {
+                    "And": [{
+                        "Variable": "$.payment_failed",
+                        "IsPresent": true
+                    },
+                    {
+                        "Variable": "$.payment_failed",
+                        "BooleanEquals": true
+                    }],
+                    "Next": "Payment Failure"
+                }
+            ],
+            "Default": "Send Order"
+        },
+         "Send Order": {
+            "Type": "Task",
+            "Resource": "${SendFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 1
+                }
+            ],
+            "Next": "Update Order"
+        },
+        "Payment Failure": {
+            "Type": "Task",
+            "Resource": "${FailureFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 1
+                }
+            ],
+            "Next": "Update Order"
+        },
+        "Update Order": {
+            "Type": "Task",
+            "Resource": "${UpdateFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 1
+                }
+            ],
+            "End": true
+        }
+    }
+}
