@@ -305,6 +305,26 @@ Resources:
             FunctionName: !Ref FailureFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref UpdateFunction
+            
+  SNSPayloadLogger:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: A Lambda function that logs the payload of messages sent to an associated SNS topic.
+      Runtime: nodejs12.x
+      CodeUri: functions/sns/
+      Handler: sns-payload-logger.snsPayloadLoggerHandler
+      # This property associates this Lambda function with the SNS topic defined above, so that whenever the topic
+      # receives a message, the Lambda function is invoked
+      Events:
+        SNSTopicEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SimpleTopic
+      MemorySize: 128
+      Timeout: 100
+      Policies:
+        # Give Lambda basic execution Permission to the helloFromLambda
+        - AWSLambdaBasicExecutionRole
         
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -316,6 +336,9 @@ Outputs:
   SQSFunction:
     Description: "SQS Lambda Function ARN"
     Value: !GetAtt SQSPayloadLogger.Arn
+  SNSFunction:
+    Description: "SNS Lambda Function ARN"
+    Value: !GetAtt SNSPayloadLogger.Arn
   StateMachine:
     Description: "StepFunctions state machine"
     Value: !GetAtt OrderProcessingStateMachine.Arn
