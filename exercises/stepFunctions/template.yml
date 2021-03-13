@@ -322,9 +322,26 @@ Resources:
             Topic: !Ref SimpleTopic
       MemorySize: 128
       Timeout: 100
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 60
+        MaximumRetryAttempts: 2
+        DestinationConfig:
+          OnSuccess:
+            Type: SQS
+            Destination: !GetAtt SuccessDestination.Arn
+          OnFailure:
+            Type: SQS
+            Destination: !GetAtt FailureDestination.Arn
       Policies:
         # Give Lambda basic execution Permission to the helloFromLambda
         - AWSLambdaBasicExecutionRole
+        - AmazonSQSFullAccess
+        
+  FailureDestination:
+    Type: AWS::SQS::Queue
+    
+  SuccessDestination:
+    Type: AWS::SQS::Queue
         
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
