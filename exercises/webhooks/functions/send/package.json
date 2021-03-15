@@ -1,0 +1,9 @@
+{
+  "name": "send_order_notification",
+  "version": "1.0.0",
+  "main": "app.js",
+  "repository": "TODO",
+  "author": "SAM CLI",
+  "license": "MIT",
+  "dependencies": {}
+}
