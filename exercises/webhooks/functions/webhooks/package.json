@@ -1,0 +1,9 @@
+{
+    "name": "webhooks-caller",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {},
+    "devDependencies": {
+        "aws-sdk": "^2.815.0"
+    }
+}

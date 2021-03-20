@@ -1,0 +1,10 @@
+{
+  "name": "process_payment",
+  "version": "1.0.0",
+  "description": "Mock process payment for NodeJS",
+  "main": "app.js",
+  "repository": "TODO",
+  "author": "SAM CLI",
+  "license": "MIT",
+  "dependencies": {}
+}
