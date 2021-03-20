@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 1 - eventbridge-apidestinations
+Transform:
+- AWS::Serverless-2016-10-31
+Parameters:
+  ApiDestinationUrl:
+    Type: String
+    Default: https://webhook.site/060e6f4a-40f8-4afc-a561-816667a29ad5
+  ApiDestinationDLQAlarmEmail:
+    Default: your-custom-email@sharklasers.com
+    Description: Email address to notify of operational issues
+    Type: String
+Resources:
+  TestConnection:
+    Type: AWS::Events::Connection
+    Properties:
+      AuthorizationType: API_KEY
+      Description: My connection with an API key
+      AuthParameters:
+        ApiKeyAuthParameters:
+          ApiKeyName: anyApiKey
+          ApiKeyValue: anyValue
+  TestApiDestination:
+    Type: AWS::Events::ApiDestination
+    Properties:
+      Name: my-apidestination
+      ConnectionArn:
+        Fn::GetAtt:
+        - TestConnection
+        - Arn
+      InvocationEndpoint:
+        Ref: ApiDestinationUrl
+      HttpMethod: POST
+      InvocationRateLimitPerSecond: 300
+  ApiDestinationDeliveryRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+        - EventsForMyAPIdestination
+      EventBusName: Orders
+      Name: apidestinations-rule
+      State: ENABLED
+      Targets:
+      - Id: myApiDestination
+        Arn:
+          Fn::GetAtt:
+          - TestApiDestination
+          - Arn
+        RoleArn:
+          Fn::GetAtt:
+          - ApiDestinationTargetRole
+          - Arn
+        RetryPolicy:
+          MaximumRetryAttempts: 2
+          MaximumEventAgeInSeconds: 200
+        DeadLetterConfig:
+          Arn:
+            Fn::GetAtt:
+            - ApiDestinationDLQ
+            - Arn
+  ApiDestinationTargetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - events.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: ApiDestinationTargetPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: events:InvokeApiDestination
+            Resource: '*'
+  ApiDestinationDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ApiDestinationDLQ
+  ApiDestinationDLQDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Alarm if queue depth increases to more than 10 messages
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+      - Name: QueueName
+        Value:
+          Fn::GetAtt:
+          - ApiDestinationDLQ
+          - QueueName
+      Statistic: Sum
+      Period: '300'
+      EvaluationPeriods: '1'
+      Threshold: '10'
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+      - Ref: ApiDestinationAlarmTopic
+      InsufficientDataActions:
+      - Ref: ApiDestinationAlarmTopic
+  ApiDestinationAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Endpoint:
+          Ref: ApiDestinationDLQAlarmEmail
+        Protocol: email
