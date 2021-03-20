@@ -59,6 +59,11 @@ Resources:
           Id: myApiDestination
           Arn: !GetAtt TestApiDestination.Arn
           RoleArn: !GetAtt ApiDestinationTargetRole.Arn
+          RetryPolicy:
+            MaximumRetryAttempts: 2
+            MaximumEventAgeInSeconds: 200
+          DeadLetterConfig:
+            Arn: !GetAtt ApiDestinationDLQ.Arn
             
   ApiDestinationTargetRole: 
     Type: "AWS::IAM::Role"
@@ -83,3 +88,43 @@ Resources:
                 Action: 'events:InvokeApiDestination'
                 Resource: '*'
             
+
+  # error handling: dlq and alarm set for too many messages arriving in the dql
+  ApiDestinationDLQ: 
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: "ApiDestinationDLQ"
+      
+  ApiDestinationDLQDepthAlarm: 
+    Type: AWS::CloudWatch::Alarm
+    Properties: 
+      AlarmDescription: "Alarm if queue depth increases to more than 10 messages"
+      Namespace: "AWS/SQS"
+      MetricName: "ApproximateNumberOfMessagesVisible"
+      Dimensions: 
+        - 
+          Name: "QueueName"
+          Value: 
+            Fn::GetAtt: 
+              - "ApiDestinationDLQ"
+              - "QueueName"
+      Statistic: "Sum"
+      Period: "300"
+      EvaluationPeriods: "1"
+      Threshold: "5"
+      ComparisonOperator: "GreaterThanThreshold"
+      AlarmActions: 
+        - 
+          Ref: "ApiDestinationAlarmTopic"
+      InsufficientDataActions: 
+        - 
+          Ref: "ApiDestinationAlarmTopic"
+          
+  ApiDestinationAlarmTopic: 
+    Type: AWS::SNS::Topic
+    Properties: 
+      Subscription: 
+        - 
+          Endpoint: 
+            Ref: "ApiDestinationDLQAlarmEmail"
+          Protocol: "email"
