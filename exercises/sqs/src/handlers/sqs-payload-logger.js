@@ -12,12 +12,16 @@ exports.sqsPayloadLoggerHandler = async (event, context) => {
     console.info(JSON.stringify(event));
     for (const message of event.Records){
       try{
-          let validationResponse = validateMessage(message.body);
-          if (validationResponse ===""){
-              await recordText(message.messageId, JSON.parse(message.body).text);
-          } else {
+          /**
+			We will uncomment this at the next step
+			Let it fail for now to check SQS DLQ		  
+			  */
+		  //let validationResponse = validateMessage(message.body);
+          //if (validationResponse ===""){
+          //    await recordText(message.messageId, JSON.parse(message.body).text);
+          //} else {
               await recordError(message.messageId, validationResponse);
-          }
+          //}
       }catch (error) {
         console.log(error);
         // Return error will consume message from the queue, throw error so that message is not lost
