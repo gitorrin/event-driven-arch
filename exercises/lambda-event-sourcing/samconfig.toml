@@ -1,0 +1,9 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "dynamo-streams"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-h94b2r98fa8u"
+s3_prefix = "dynamo-streams"
+region = "eu-west-1"
+capabilities = "CAPABILITY_IAM"
